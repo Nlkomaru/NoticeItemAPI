@@ -8,11 +8,13 @@
  *     If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 
-rootProject.name = "NoticeItem"
+package com.noticemc.noticeitemapi.utils.coroutines
 
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        maven("https://papermc.io/repo/repository/maven-public/")
-    }
-}
+import kotlinx.coroutines.Dispatchers
+import kotlin.coroutines.CoroutineContext
+
+val Dispatchers.async: CoroutineContext
+    get() = DispatcherContainer.async
+
+val Dispatchers.minecraft: CoroutineContext
+    get() = DispatcherContainer.sync
