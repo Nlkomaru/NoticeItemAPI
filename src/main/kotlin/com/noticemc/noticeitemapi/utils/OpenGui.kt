@@ -12,19 +12,17 @@ package com.noticemc.noticeitemapi.utils
 
 import com.noticemc.noticeitemapi.NoticeItem.Companion.plugin
 import com.noticemc.noticeitemapi.data.ItemData
-import com.noticemc.noticeitemapi.utils.ChangeItemData.Companion.decode
-import com.typesafe.config.ConfigFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.hocon.Hocon
-import kotlinx.serialization.hocon.decodeFromConfig
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.inventory.Inventory
 import java.io.File
+import java.nio.file.Files
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -36,7 +34,7 @@ object OpenGui {
 
         val inventory = Bukkit.createInventory(player, 54, GuiUtils.openGuiName)
 
-        val itemList: ArrayList<File> = getItemData(uuid)
+        val itemList: List<File> = getItemData(uuid)
 
         for (i in 0..53) {
             inventory.setItem(i, GuiUtils.getNoDataGlassItem())
@@ -55,12 +53,14 @@ object OpenGui {
             if (itemList.size - 1 < (page - 1) * 45 + i) {
                 break
             }
-            val itemData = Hocon.decodeFromConfig<ItemData>(ConfigFactory.parseFile(itemList[(page - 1) * 45 + i]))
+            val itemData = Json.decodeFromString<ItemData>(withContext(Dispatchers.IO) {
+                Files.readString(itemList[(page - 1) * 45 + i].toPath())
+            })
             val limit = itemData.limit
             if (limit != null && limit.isBefore(ZonedDateTime.now())) {
                 continue
             }
-            val item = itemData.items[0].decode()
+            val item = itemData.items[0]
             val itemMeta = item.itemMeta
             val itemLore: MutableList<Component> = ArrayList()
 
@@ -76,7 +76,6 @@ object OpenGui {
             itemLore.add(MiniMessage.miniMessage().deserialize("<color:gold>説明: </color:gold>  <color:#32cd32> $description"))
             itemLore.add(MiniMessage.miniMessage().deserialize("<color:#40e0d0> 左クリックで受け取る事ができます"))
             itemLore.add(MiniMessage.miniMessage().deserialize("<color:#40e0d0> 右クリックでプレビューを見ることができます"))
-
             itemMeta.lore(itemLore)
             item.itemMeta = itemMeta
 
@@ -87,37 +86,23 @@ object OpenGui {
         return inventory
     }
 
-    //軽量化の必要
-    @OptIn(ExperimentalSerializationApi::class)
-    suspend fun getItemData(uuid: UUID): ArrayList<File> {
-        val itemList: ArrayList<File> = ArrayList()
-        withContext(Dispatchers.IO) {
-            val file = File(File(plugin.dataFolder, "data"), uuid.toString())
-            file.listFiles()?.forEach {
-                val itemData = Hocon.decodeFromConfig<ItemData>(ConfigFactory.parseFile(it))
-                val limit = itemData.limit
-                if (limit == null || limit.isAfter(ZonedDateTime.now())) {
-                    itemList.add(it)
-                } else {
-                    it.delete()
-                }
-            }
-        }
-        return itemList
-    }
-
-    suspend fun purgeFile(uuid: UUID) {
-        withContext(Dispatchers.IO) {
-            val file = File(File(plugin.dataFolder, "data"), uuid.toString())
-            file.listFiles()?.forEach {
-                val itemData = Hocon.decodeFromConfig<ItemData>(ConfigFactory.parseFile(it))
-                val limit = itemData.limit
-
-                if (limit != null && limit.isBefore(ZonedDateTime.now())) {
-                    it.delete()
-                }
-            }
+    suspend fun getItemData(uuid: UUID): List<File> {
+        return withContext(Dispatchers.IO) {
+            File(File(plugin.dataFolder, "data"), uuid.toString()).listFiles().asList()
         }
     }
 
+    suspend fun purgeFile(uuid: UUID) = withContext(Dispatchers.IO) {
+        val file = File(File(plugin.dataFolder, "data"), uuid.toString())
+        file.listFiles()?.forEach {
+            val itemData = Json.decodeFromString<ItemData>(Files.readString(it.toPath()))
+            val limit = itemData.limit
+
+            if (limit?.isBefore(ZonedDateTime.now()) == true) {
+                it.delete()
+            }
+        }
+    }
 }
+
+

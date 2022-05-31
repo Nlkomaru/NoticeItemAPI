@@ -10,23 +10,19 @@
 
 package com.noticemc.noticeitemapi.events
 
-import com.github.shynixn.mccoroutine.launch
+import com.github.shynixn.mccoroutine.bukkit.launch
 import com.noticemc.noticeitemapi.NoticeItem.Companion.plugin
 import com.noticemc.noticeitemapi.data.ItemData
-import com.noticemc.noticeitemapi.utils.ChangeItemData.Companion.decode
 import com.noticemc.noticeitemapi.utils.GuiUtils
 import com.noticemc.noticeitemapi.utils.OpenGui
 import com.noticemc.noticeitemapi.utils.OpenGui.getItemData
 import com.noticemc.noticeitemapi.utils.PreviewGui
 import com.noticemc.noticeitemapi.utils.coroutines.minecraft
-import com.typesafe.config.ConfigFactory
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.hocon.Hocon
-import kotlinx.serialization.hocon.decodeFromConfig
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -34,11 +30,11 @@ import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.ItemStack
 import java.io.File
+import java.nio.file.Files
 import kotlin.math.ceil
 
 class GuiClickEvent : Listener {
 
-    @OptIn(ExperimentalSerializationApi::class)
     @EventHandler
     suspend fun guiLeftClickEvent(e: InventoryClickEvent) {
         plugin.launch {
@@ -72,13 +68,13 @@ class GuiClickEvent : Listener {
                             return@launch
                         }
 
-                        lateinit var item: ItemData
+                        lateinit var itemData: ItemData
                         withContext(Dispatchers.IO) {
-                            item = Hocon.decodeFromConfig(ConfigFactory.parseFile(items[clickedItemNum]))
-                            File(File(File(plugin.dataFolder, "data"), uuid.toString()), "${item.managementULID}.conf").delete()
+                            itemData = Json.decodeFromString(Files.readString(items[clickedItemNum].toPath()))
+                            File(File(File(plugin.dataFolder, "data"), uuid.toString()), "${itemData.managementULID}.json").delete()
                         }
-                        item.items.forEach {
-                            player.addItem(it.decode())
+                        itemData.items.forEach {
+                            player.addItem(it)
                         }
                         player.openInventory(OpenGui.inventory(player, pages))
 
@@ -114,17 +110,17 @@ class GuiClickEvent : Listener {
                         withContext(Dispatchers.IO) {
                             repeat(10) {
                                 val items = getItemData(uuid)
-                                if (items.size > 0) {
-                                    val item = Hocon.decodeFromConfig<ItemData>(ConfigFactory.parseFile(items[0]))
-                                    File(File(File(plugin.dataFolder, "data"), uuid.toString()), "${item.managementULID}.conf").delete()
+                                if (items.isNotEmpty()) {
+                                    val item = Json.decodeFromString<ItemData>(Files.readString(items[0].toPath()))
+                                    File(File(File(plugin.dataFolder, "data"), uuid.toString()), "${item.managementULID}.json").delete()
                                     giveItems.add(item)
                                 }
                             }
                         }
 
                         giveItems.forEach { itemData ->
-                            itemData.items.forEach { binary ->
-                                player.addItem(binary.decode())
+                            itemData.items.forEach {
+                                player.addItem(it)
                             }
                             delay(50)
                         }
@@ -137,20 +133,20 @@ class GuiClickEvent : Listener {
                         val giveItems: ArrayList<ItemData> = ArrayList()
 
                         withContext(Dispatchers.IO) {
-                            while (getItemData(uuid).size > 0) {
+                            while (getItemData(uuid).isNotEmpty()) {
                                 val items = getItemData(uuid)
 
-                                val item = Hocon.decodeFromConfig<ItemData>(ConfigFactory.parseFile(items[0]))
-                                File(File(File(plugin.dataFolder, "data"), uuid.toString()), "${item.managementULID}.conf").delete()
+                                val item = Json.decodeFromString<ItemData>(Files.readString(items[0].toPath()))
+                                File(File(File(plugin.dataFolder, "data"), uuid.toString()), "${item.managementULID}.json").delete()
                                 giveItems.add(item)
 
                             }
                         }
 
                         giveItems.forEach { itemData ->
-                            itemData.items.forEach { binary ->
-                                async(Dispatchers.minecraft) {
-                                    player.addItem(binary.decode())
+                            withContext(Dispatchers.minecraft) {
+                                itemData.items.forEach {
+                                    player.addItem(it)
                                 }
                             }
                         }
@@ -171,7 +167,9 @@ class GuiClickEvent : Listener {
                             return@launch
                         }
 
-                        val item = Hocon.decodeFromConfig<ItemData>(ConfigFactory.parseFile(items[clickedItemNum]))
+                        val item = Json.decodeFromString<ItemData>(withContext(Dispatchers.IO) {
+                            Files.readString(items[clickedItemNum].toPath())
+                        })
                         val ulid = item.managementULID
                         player.openInventory(PreviewGui.getPreviewGui(player, ulid, 1, pages))
 

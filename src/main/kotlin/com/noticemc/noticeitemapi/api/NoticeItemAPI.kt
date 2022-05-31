@@ -10,7 +10,6 @@
 
 package com.noticemc.noticeitemapi.api
 
-import com.typesafe.config.Optional
 import org.bukkit.OfflinePlayer
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
@@ -18,25 +17,19 @@ import java.time.ZonedDateTime
 
 interface NoticeItemAPI {
 
-    fun addItem(player: OfflinePlayer,
-        item: ItemStack,
-        @Optional limit: ZonedDateTime,
-        @Optional supplement: HashMap<String, String>,
-        @Optional description: String) {
-    }
+    fun addItem(player: OfflinePlayer, item: ItemStack, limit: ZonedDateTime?, supplement: HashMap<String, String>?, description: String?): String?
 
     fun addItem(player: OfflinePlayer,
         items: Collection<ItemStack>,
-        @Optional limit: ZonedDateTime,
-        @Optional supplement: HashMap<String, String>,
-        @Optional description: String) {
-    }
+        limit: ZonedDateTime?,
+        supplement: HashMap<String, String>?,
+        description: String?): String?
 
     fun addItem(player: OfflinePlayer,
         inventory: Inventory,
-        @Optional limit: ZonedDateTime,
-        @Optional supplement: HashMap<String, String>,
-        @Optional description: String) {
-    }
+        limit: ZonedDateTime?,
+        supplement: HashMap<String, String>?,
+        description: String?): String?
 
+    fun removeItem(player: OfflinePlayer, ulid: String): Boolean
 }

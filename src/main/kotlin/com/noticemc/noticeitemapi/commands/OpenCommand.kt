@@ -12,7 +12,7 @@ package com.noticemc.noticeitemapi.commands
 
 import cloud.commandframework.annotations.CommandMethod
 import cloud.commandframework.annotations.CommandPermission
-import com.github.shynixn.mccoroutine.launch
+import com.github.shynixn.mccoroutine.bukkit.launch
 import com.noticemc.noticeitemapi.NoticeItem.Companion.plugin
 import com.noticemc.noticeitemapi.utils.OpenGui
 import com.noticemc.noticeitemapi.utils.OpenGui.purgeFile
@@ -24,7 +24,7 @@ import org.bukkit.entity.Player
 class OpenCommand {
 
     @CommandMethod("nia open")
-    @CommandPermission("noticeinventory.command.open")
+    @CommandPermission("noticeitemapi.command.open")
     fun open(sender: CommandSender) {
         plugin.launch {
             if (sender !is Player) {

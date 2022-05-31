@@ -10,6 +10,8 @@
 
 package com.noticemc.noticeitemapi.utils
 
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.inventory.ItemStack
 import org.bukkit.util.io.BukkitObjectInputStream
 import org.bukkit.util.io.BukkitObjectOutputStream
@@ -17,7 +19,7 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.*
 
-class ChangeItemData {
+class Utils {
     //アイテムをエンコード、デコードするクラス
     companion object {
 
@@ -39,6 +41,10 @@ class ChangeItemData {
             val bois = BukkitObjectInputStream(bais)
             return bois.readObject() as ItemStack
 
+        }
+
+        fun Component.toPlainText(): String {
+            return PlainTextComponentSerializer.plainText().serialize(this)
         }
     }
 }

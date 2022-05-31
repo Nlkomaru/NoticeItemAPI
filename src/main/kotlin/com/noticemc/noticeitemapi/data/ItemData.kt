@@ -10,6 +10,9 @@
 
 package com.noticemc.noticeitemapi.data
 
+import com.noticemc.noticeitemapi.utils.Utils.Companion.decode
+import com.noticemc.noticeitemapi.utils.Utils.Companion.encode
+import com.noticemc.noticeitemapi.utils.GuiUtils.mm
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -17,6 +20,8 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.*
+import org.bukkit.inventory.ItemStack
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -27,7 +32,7 @@ data class ItemData(val version: String,
     @Serializable(with = KZonedDateTimeSerializer::class) val limit: ZonedDateTime?,
     val supplement: HashMap<String, String>?,
     val description: String?,
-    val items: ArrayList<String>)
+    val items: ArrayList<@Serializable(with = ItemStackSerializer::class) ItemStack>)
 
 object UUIDSerializer : KSerializer<UUID> {
     override val descriptor = PrimitiveSerialDescriptor("UUID", PrimitiveKind.STRING)
@@ -39,6 +44,11 @@ object UUIDSerializer : KSerializer<UUID> {
     override fun serialize(encoder: Encoder, value: UUID) {
         encoder.encodeString(value.toString())
     }
+}
+
+val json = Json {
+    isLenient = true
+    prettyPrint = true
 }
 
 object KZonedDateTimeSerializer : KSerializer<ZonedDateTime> {
@@ -53,3 +63,24 @@ object KZonedDateTimeSerializer : KSerializer<ZonedDateTime> {
         return ZonedDateTime.parse(string)
     }
 }
+
+object ItemStackSerializer : KSerializer<ItemStack> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("ItemStack", PrimitiveKind.STRING)
+    override fun serialize(encoder: Encoder, value: ItemStack) {
+        require(encoder is JsonEncoder)
+
+        val encode = ItemStackData(value.type.name, mm.serialize(value.displayName()), value.encode())
+        encoder.encodeJsonElement(json.encodeToJsonElement(encode))
+    }
+
+    override fun deserialize(decoder: Decoder): ItemStack {
+        require(decoder is JsonDecoder)
+        val element = decoder.decodeJsonElement()
+        val itemData = json.decodeFromJsonElement<ItemStackData>(element)
+        return itemData.item.decode()
+    }
+
+}
+
+@Serializable
+data class ItemStackData(val kind: String, val name: String?, val item: String)

@@ -13,16 +13,14 @@ package com.noticemc.noticeitemapi.events
 import com.noticemc.noticeitemapi.NoticeItem
 import com.noticemc.noticeitemapi.data.ItemData
 import com.noticemc.noticeitemapi.events.GuiClickEvent.Companion.addItem
-import com.noticemc.noticeitemapi.utils.ChangeItemData.Companion.decode
 import com.noticemc.noticeitemapi.utils.GuiUtils
 import com.noticemc.noticeitemapi.utils.OpenGui
 import com.noticemc.noticeitemapi.utils.PreviewGui
-import com.typesafe.config.ConfigFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.hocon.Hocon
-import kotlinx.serialization.hocon.decodeFromConfig
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -30,6 +28,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryType
 import java.io.File
+import java.nio.file.Files
 import kotlin.math.ceil
 
 class PreviewClickEvent : Listener {
@@ -55,9 +54,9 @@ class PreviewClickEvent : Listener {
         val pages = inventory.getItem(48)?.amount ?: 1
         val beforePages = inventory.getItem(49)?.amount ?: 1
         val ulid = PlainTextComponentSerializer.plainText().serialize(inventory.getItem(49)?.itemMeta?.displayName()!!)
-        val file = File(File(File(NoticeItem.plugin.dataFolder, "data"), uuid.toString()), "$ulid.conf")
+        val file = File(File(File(NoticeItem.plugin.dataFolder, "data"), uuid.toString()), "$ulid.json")
         val itemData = withContext(Dispatchers.IO) {
-            Hocon.decodeFromConfig<ItemData>(ConfigFactory.parseFile(file))
+            Json.decodeFromString<ItemData>(Files.readString(file.toPath()))
         }
         val maxPage = ceil(itemData.items.size.toDouble() / 45).toInt()
 
@@ -89,7 +88,8 @@ class PreviewClickEvent : Listener {
                 file.delete()
                 player.openInventory(OpenGui.inventory(player, beforePages))
                 itemData.items.forEach {
-                    player.addItem(it.decode())
+                    val item = it
+                    player.addItem(item)
                 }
 
             }

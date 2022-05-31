@@ -8,6 +8,9 @@
  *     If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 
+
+import net.minecrell.pluginyml.bukkit.BukkitPluginDescription.Permission.Default
+
 plugins {
     id("java")
     id("eclipse")
@@ -39,17 +42,18 @@ dependencies {
     implementation("cloud.commandframework:cloud-kotlin-extensions:1.6.2")
     implementation("cloud.commandframework:cloud-paper:1.6.2")
     implementation("com.github.guepardoapps:kulid:2.0.0.0")
-    implementation("com.github.shynixn.mccoroutine:mccoroutine-bukkit-api:1.6.0")
-    implementation("com.github.shynixn.mccoroutine:mccoroutine-bukkit-core:1.6.0")
+    implementation("com.github.shynixn.mccoroutine:mccoroutine-bukkit-api:2.2.0")
+    implementation("com.github.shynixn.mccoroutine:mccoroutine-bukkit-core:2.2.0")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.6.10-RC")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-hocon:1.3.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
 }
 
 java {
     toolchain.languageVersion.set(JavaLanguageVersion.of(17))
 }
+
 
 tasks {
     compileKotlin {
@@ -70,7 +74,7 @@ tasks {
 
 tasks {
     runServer {
-        minecraftVersion("1.18.1")
+        minecraftVersion("1.18.2")
     }
 }
 
@@ -84,6 +88,18 @@ bukkit {
 
     apiVersion = "1.18"
 
-    libraries = listOf("com.github.shynixn.mccoroutine:mccoroutine-bukkit-api:1.6.0", "com.github.shynixn.mccoroutine:mccoroutine-bukkit-core:1.6.0")
+    libraries = listOf("com.github.shynixn.mccoroutine:mccoroutine-bukkit-api:2.2.0", "com.github.shynixn.mccoroutine:mccoroutine-bukkit-core:2.2.0")
 
+    permissions {
+        register("noticeitemapi.admin") {
+            children =
+                listOf("noticeitemapi.command.remove", "noticeitemapi.command.open", "noticeitemapi.command.copy", "noticeitemapi.command.give")
+            default = Default.OP
+        }
+        register("noticeitemapi.player") {
+            children = listOf("noticeitemapi.command.open", "noticeitemapi.command.give")
+            default = Default.TRUE
+        }
+
+    }
 }

@@ -14,25 +14,29 @@ import cloud.commandframework.bukkit.CloudBukkitCapabilities
 import cloud.commandframework.execution.AsynchronousCommandExecutionCoordinator
 import cloud.commandframework.meta.SimpleCommandMeta
 import com.github.guepardoapps.kulid.ULID
-import com.github.shynixn.mccoroutine.registerSuspendingEvents
+import com.github.shynixn.mccoroutine.bukkit.launch
+import com.github.shynixn.mccoroutine.bukkit.registerSuspendingEvents
+import com.noticemc.noticeitemapi.NoticeItem.Companion.plugin
 import com.noticemc.noticeitemapi.api.NoticeItemAPI
-import com.noticemc.noticeitemapi.commands.OpenCommand
+import com.noticemc.noticeitemapi.commands.*
 import com.noticemc.noticeitemapi.data.ItemData
 import com.noticemc.noticeitemapi.events.GuiClickEvent
+import com.noticemc.noticeitemapi.events.LoginPopUpEvent
 import com.noticemc.noticeitemapi.events.PreviewClickEvent
-import com.noticemc.noticeitemapi.utils.ChangeItemData.Companion.encode
-import com.typesafe.config.ConfigRenderOptions
-import com.typesafe.config.Optional
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.hocon.Hocon
-import kotlinx.serialization.hocon.encodeToConfig
+import com.noticemc.noticeitemapi.utils.GuiUtils.mm
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.bukkit.OfflinePlayer
 import org.bukkit.command.CommandSender
+import org.bukkit.entity.Player
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.java.JavaPlugin
 import java.io.*
 import java.time.ZonedDateTime
+import java.util.function.Function.identity
 
 class NoticeItem : JavaPlugin(), NoticeItemAPI {
 
@@ -44,8 +48,11 @@ class NoticeItem : JavaPlugin(), NoticeItemAPI {
         // Plugin startup logic
         plugin = this
         setCommand()
-        server.pluginManager.registerSuspendingEvents(GuiClickEvent(), this)
-        server.pluginManager.registerSuspendingEvents(PreviewClickEvent(), this)
+        with(server.pluginManager) {
+            registerSuspendingEvents(GuiClickEvent(), plugin)
+            registerSuspendingEvents(PreviewClickEvent(), plugin)
+            registerSuspendingEvents(LoginPopUpEvent(), plugin)
+        }
     }
 
     override fun onDisable() {
@@ -53,19 +60,12 @@ class NoticeItem : JavaPlugin(), NoticeItemAPI {
     }
 
     private fun setCommand() {
-        var commandManager: cloud.commandframework.paper.PaperCommandManager<CommandSender>? = null
-        try {
-            commandManager = cloud.commandframework.paper.PaperCommandManager(this,
-                AsynchronousCommandExecutionCoordinator.simpleCoordinator(),
-                java.util.function.Function.identity(),
-                java.util.function.Function.identity())
-        } catch (ex: Exception) {
-            ex.printStackTrace()
-        }
-        if (commandManager == null) {
-            server.pluginManager.disablePlugin(this)
-            return
-        }
+
+        val commandManager = cloud.commandframework.paper.PaperCommandManager(this,
+            AsynchronousCommandExecutionCoordinator.simpleCoordinator(),
+            identity(),
+            identity())
+
 
         if (commandManager.queryCapability(CloudBukkitCapabilities.ASYNCHRONOUS_COMPLETION)) {
             commandManager.registerAsynchronousCompletions()
@@ -75,34 +75,40 @@ class NoticeItem : JavaPlugin(), NoticeItemAPI {
                 SimpleCommandMeta.empty()
             }
 
-        annotationParser.parse(OpenCommand())
+        with(annotationParser) {
+            parse(CommandSuggestion())
+            parse(CopyCommand())
+            parse(GiveCommand())
+            parse(RemoveCommand())
+            parse(OpenCommand())
+        }
+
     }
 
     override fun addItem(player: OfflinePlayer,
         item: ItemStack,
-        @Optional limit: ZonedDateTime,
-        @Optional supplement: HashMap<String, String>,
-        @Optional description: String) {
-
-        pushItems(player, listOf(item), limit, supplement, description)
-
+        limit: ZonedDateTime?,
+        supplement: HashMap<String, String>?,
+        description: String?): String {
+        return pushItems(player, listOf(item), limit, supplement, description)
     }
 
     override fun addItem(player: OfflinePlayer,
         items: Collection<ItemStack>,
-        @Optional limit: ZonedDateTime,
-        @Optional supplement: HashMap<String, String>,
-        @Optional description: String) {
-        pushItems(player, items, limit, supplement, description)
+        limit: ZonedDateTime?,
+        supplement: HashMap<String, String>?,
+        description: String?): String {
+
+        return pushItems(player, items, limit, supplement, description)
 
     }
 
     override fun addItem(player: OfflinePlayer,
         inventory: Inventory,
-        @Optional limit: ZonedDateTime,
-        @Optional supplement: HashMap<String, String>,
-        @Optional description: String) {
-        val items = inventory.contents ?: return
+        limit: ZonedDateTime?,
+        supplement: HashMap<String, String>?,
+        description: String?): String? {
+        val items = inventory.contents ?: return null
 
         val list: ArrayList<ItemStack> = ArrayList()
         items.forEach {
@@ -110,39 +116,72 @@ class NoticeItem : JavaPlugin(), NoticeItemAPI {
                 list.add(it)
             }
         }
+        return pushItems(player, list, limit, supplement, description)
 
-        pushItems(player, list, limit, supplement, description)
     }
 
-    @OptIn(ExperimentalSerializationApi::class)
+    override fun removeItem(player: OfflinePlayer, ulid: String): Boolean {
+
+        val uuid = player.uniqueId
+
+        val fileName = "$ulid.json"
+        val fileDir = File(File(File(plugin.dataFolder, "data"), uuid.toString()), fileName)
+        if (!fileDir.exists()) {
+            return false
+        }
+        return fileDir.delete()
+    }
+
     private fun pushItems(player: OfflinePlayer,
         items: Collection<ItemStack>,
         limit: ZonedDateTime?,
         supplement: HashMap<String, String>?,
-        description: String?) {
-        if (items.isEmpty()) {
-            return
-        }
-        val uuid = player.uniqueId
+        description: String?): String {
+
         val managementULID = ULID.random()
-        val fileName = "$managementULID.conf"
-        val fileDir = File(File(File(plugin.dataFolder, "data"), uuid.toString()), fileName)
-        val encodeItems: ArrayList<String> = ArrayList()
-        items.forEach {
-            encodeItems.add(it.encode())
-        }
-        val itemData = ItemData("1.0.0", managementULID, player.uniqueId, limit, supplement, description, encodeItems)
-        val renderOptions = ConfigRenderOptions.concise().setFormatted(true).setJson(true)
-        val string = Hocon.encodeToConfig(itemData).root().render(renderOptions)
+        plugin.launch {
+            if (items.isEmpty()) {
+                return@launch
+            }
+            withContext(Dispatchers.IO) {
+                val uuid = player.uniqueId
 
-        if (!fileDir.parentFile.exists()) {
-            fileDir.parentFile.mkdirs()
-        }
-        fileDir.createNewFile()
-        val fw = PrintWriter(BufferedWriter(OutputStreamWriter(FileOutputStream(fileDir), "UTF-8")))
-        fw.write(string)
-        fw.close()
+                val fileName = "$managementULID.json"
+                val fileDir = File(File(File(plugin.dataFolder, "data"), uuid.toString()), fileName)
+                val itemStacks = ArrayList<ItemStack>()
 
+                withContext(Dispatchers.Default) {
+                    items.forEach {
+                        if (it.type.isItem && !it.type.isAir) {
+                            itemStacks.add(it)
+                        }
+                    }
+                }
+
+                val itemData = ItemData("1.0.0", managementULID, player.uniqueId, limit, supplement, description, itemStacks)
+                val json = Json {
+                    isLenient = true
+                    prettyPrint = true
+                }
+
+                val string = json.encodeToString(itemData)
+
+                if (!fileDir.parentFile.exists()) {
+                    fileDir.parentFile.mkdirs()
+                }
+
+                fileDir.createNewFile()
+
+                val fw = PrintWriter(BufferedWriter(OutputStreamWriter(FileOutputStream(fileDir), "UTF-8")))
+                fw.write(string)
+                fw.close()
+
+                if (player.isOnline) {
+                    (player as Player).sendMessage(mm.deserialize("<color:yellow>受け取ることが可能なアイテムがあります</color> <click:run_command:'/nia open'>クリックで開く</click>"))
+                }
+            }
+        }
+        return managementULID
     }
-
 }
+

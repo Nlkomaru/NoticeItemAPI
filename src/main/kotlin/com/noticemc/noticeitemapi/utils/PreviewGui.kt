@@ -12,16 +12,15 @@ package com.noticemc.noticeitemapi.utils
 
 import com.noticemc.noticeitemapi.NoticeItem
 import com.noticemc.noticeitemapi.data.ItemData
-import com.noticemc.noticeitemapi.utils.ChangeItemData.Companion.decode
-import com.typesafe.config.ConfigFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.hocon.Hocon
-import kotlinx.serialization.hocon.decodeFromConfig
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.inventory.Inventory
 import java.io.File
+import java.nio.file.Files
 
 object PreviewGui {
 
@@ -29,18 +28,18 @@ object PreviewGui {
         val inventory = Bukkit.createInventory(player, 54, GuiUtils.previewGuiName)
         val uuid = player.uniqueId
         val itemData = withContext(Dispatchers.IO) {
-            val file = File(File(File(NoticeItem.plugin.dataFolder, "data"), uuid.toString()), "$ulid.conf")
-            Hocon.decodeFromConfig<ItemData>(ConfigFactory.parseFile(file))
+            val file = File(File(File(NoticeItem.plugin.dataFolder, "data"), uuid.toString()), "$ulid.json")
+            Json.decodeFromString<ItemData>(Files.readString(file.toPath()))
         }
         for (i in 0..53) {
             inventory.setItem(i, GuiUtils.getNoDataGlassItem())
         }
 
         val ulidGlass = GuiUtils.getNoDataGlassItem()
-        val itemMeta = ulidGlass.itemMeta
+        val glassMeta = ulidGlass.itemMeta
         ulidGlass.amount = beforePage
-        itemMeta.displayName(GuiUtils.mm.deserialize(ulid))
-        ulidGlass.itemMeta = itemMeta
+        glassMeta.displayName(GuiUtils.mm.deserialize(ulid))
+        ulidGlass.itemMeta = glassMeta
 
 
         inventory.setItem(45, GuiUtils.getReturnFirstItem())
@@ -57,7 +56,7 @@ object PreviewGui {
                 break
             }
 
-            val item = (itemData.items[(page - 1) * 45 + i]).decode()
+            val item = itemData.items[(page - 1) * 45 + i]
 
             inventory.setItem(i, item)
         }
