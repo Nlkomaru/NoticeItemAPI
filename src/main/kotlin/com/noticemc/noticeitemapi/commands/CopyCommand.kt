@@ -34,9 +34,9 @@ class CopyCommand {
             val player = Bukkit.getOfflinePlayerIfCached(it)
             if (player == null) {
                 sender.sendMessage(mm.deserialize("<red>${it}というプレイヤーは存在しません"))
-                return@forEach
+            } else {
+                list.add(player)
             }
-            list.add(player)
         }
 
         val plugin = Bukkit.getPluginManager().getPlugin("NoticeItem")
