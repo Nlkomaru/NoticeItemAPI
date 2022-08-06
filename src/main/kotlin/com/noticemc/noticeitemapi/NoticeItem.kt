@@ -16,13 +16,10 @@ import cloud.commandframework.meta.SimpleCommandMeta
 import com.github.guepardoapps.kulid.ULID
 import com.github.shynixn.mccoroutine.bukkit.launch
 import com.github.shynixn.mccoroutine.bukkit.registerSuspendingEvents
-import com.noticemc.noticeitemapi.NoticeItem.Companion.plugin
 import com.noticemc.noticeitemapi.api.NoticeItemAPI
 import com.noticemc.noticeitemapi.commands.*
 import com.noticemc.noticeitemapi.data.ItemData
-import com.noticemc.noticeitemapi.events.GuiClickEvent
-import com.noticemc.noticeitemapi.events.LoginPopUpEvent
-import com.noticemc.noticeitemapi.events.PreviewClickEvent
+import com.noticemc.noticeitemapi.events.*
 import com.noticemc.noticeitemapi.utils.GuiUtils.mm
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -36,7 +33,7 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.java.JavaPlugin
 import java.io.*
 import java.time.ZonedDateTime
-import java.util.function.Function.identity
+import java.util.function.Function.*
 
 class NoticeItem : JavaPlugin(), NoticeItemAPI {
 
@@ -81,6 +78,7 @@ class NoticeItem : JavaPlugin(), NoticeItemAPI {
             parse(GiveCommand())
             parse(RemoveCommand())
             parse(OpenCommand())
+            parse(CopyAllCommand())
         }
 
     }

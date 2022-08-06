@@ -8,8 +8,8 @@
  *     If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 
-
 import net.minecrell.pluginyml.bukkit.BukkitPluginDescription.Permission.Default
+import org.apache.commons.logging.LogFactory.release
 
 plugins {
     id("java")
@@ -20,6 +20,7 @@ plugins {
     id("net.minecrell.plugin-yml.bukkit") version "0.5.1"
     id("xyz.jpenilla.run-paper") version "1.0.6"
     kotlin("plugin.serialization") version "1.6.10"
+    id("maven-publish")
 }
 
 group = "com.noticemc"     // need to change
@@ -35,18 +36,24 @@ repositories {
     maven("https://repo.incendo.org/content/repositories/snapshots")
 }
 
+val cloudVersion = "1.7.0"
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.18.2-R0.1-SNAPSHOT")
-    implementation("cloud.commandframework:cloud-annotations:1.6.2")
-    implementation("cloud.commandframework:cloud-core:1.6.2")
-    implementation("cloud.commandframework:cloud-kotlin-extensions:1.6.2")
-    implementation("cloud.commandframework:cloud-paper:1.6.2")
+
+    implementation("cloud.commandframework:cloud-annotations:$cloudVersion")
+    implementation("cloud.commandframework:cloud-core:$cloudVersion")
+    implementation("cloud.commandframework:cloud-kotlin-extensions:$cloudVersion")
+    implementation("cloud.commandframework:cloud-paper:$cloudVersion")
+
     implementation("com.github.guepardoapps:kulid:2.0.0.0")
-    implementation("com.github.shynixn.mccoroutine:mccoroutine-bukkit-api:2.2.0")
-    implementation("com.github.shynixn.mccoroutine:mccoroutine-bukkit-core:2.2.0")
+
+    implementation("com.github.shynixn.mccoroutine:mccoroutine-bukkit-api:2.4.0")
+    implementation("com.github.shynixn.mccoroutine:mccoroutine-bukkit-core:2.4.0")
+
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.6.10-RC")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
 }
 
@@ -78,6 +85,19 @@ tasks {
     }
 }
 
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = group.toString()
+            artifactId = "noticeitemapi"
+            version = "miencraft_plugin_version"
+
+            from(components["java"])
+        }
+    }
+}
+
+
 
 bukkit {
     name = "NoticeItem" // need to change
@@ -88,7 +108,7 @@ bukkit {
 
     apiVersion = "1.18"
 
-    libraries = listOf("com.github.shynixn.mccoroutine:mccoroutine-bukkit-api:2.2.0", "com.github.shynixn.mccoroutine:mccoroutine-bukkit-core:2.2.0")
+    libraries = listOf("com.github.shynixn.mccoroutine:mccoroutine-bukkit-api:2.4.0", "com.github.shynixn.mccoroutine:mccoroutine-bukkit-core:2.4.0")
 
     permissions {
         register("noticeitemapi.admin") {
