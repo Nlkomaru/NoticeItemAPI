@@ -2,6 +2,11 @@
 
 Item gifting plugin that runs on PaperMC
 
+```kotlin
+ val noticeItemAPI = this.server.pluginManager.getPlugin("NoticeItem") as NoticeItemAPI
+ noticeItemAPI.addItem(***)
+```
+
 ## License
 
 ![cc0](http://i.creativecommons.org/p/zero/1.0/88x31.png)
