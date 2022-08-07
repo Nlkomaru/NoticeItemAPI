@@ -71,7 +71,7 @@ class GuiClickEvent : Listener {
                         lateinit var itemData: ItemData
                         withContext(Dispatchers.IO) {
                             itemData = Json.decodeFromString(Files.readString(items[clickedItemNum].toPath()))
-                            File(File(File(plugin.dataFolder, "data"), uuid.toString()), "${itemData.managementULID}.json").delete()
+                            plugin.dataFolder.resolve("data").resolve(uuid.toString()).resolve("${itemData.managementULID}.json").delete()
                         }
                         itemData.items.forEach {
                             player.addItem(it)
@@ -80,9 +80,11 @@ class GuiClickEvent : Listener {
 
                     }
                     45 -> {
+                        //return page no.1
                         player.openInventory(OpenGui.inventory(player, 1))
                     }
                     46 -> {
+                        // before page
                         if (pages <= 1) {
                             inventory.setItem(46, GuiUtils.getNoticeCantItem())
                             delay(1000)
@@ -94,6 +96,7 @@ class GuiClickEvent : Listener {
                         }
                     }
                     50 -> {
+                        // next page
                         if (maxPage <= pages) {
                             inventory.setItem(50, GuiUtils.getNoticeCantItem())
                             delay(1000)
@@ -105,6 +108,7 @@ class GuiClickEvent : Listener {
                         }
                     }
                     51 -> {
+                        // get 10 items
                         val giveItems: ArrayList<ItemData> = ArrayList()
 
                         withContext(Dispatchers.IO) {
@@ -112,7 +116,7 @@ class GuiClickEvent : Listener {
                                 val items = getItemData(uuid)
                                 if (items.isNotEmpty()) {
                                     val item = Json.decodeFromString<ItemData>(Files.readString(items[0].toPath()))
-                                    File(File(File(plugin.dataFolder, "data"), uuid.toString()), "${item.managementULID}.json").delete()
+                                    plugin.dataFolder.resolve("data").resolve(uuid.toString()).resolve("${item.managementULID}.json").delete()
                                     giveItems.add(item)
                                 }
                             }
@@ -129,6 +133,7 @@ class GuiClickEvent : Listener {
 
                     }
                     52 -> {
+                        // get all items
                         player.closeInventory()
                         val giveItems: ArrayList<ItemData> = ArrayList()
 
@@ -137,7 +142,7 @@ class GuiClickEvent : Listener {
                                 val items = getItemData(uuid)
 
                                 val item = Json.decodeFromString<ItemData>(Files.readString(items[0].toPath()))
-                                File(File(File(plugin.dataFolder, "data"), uuid.toString()), "${item.managementULID}.json").delete()
+                                plugin.dataFolder.resolve("data").resolve(uuid.toString()).resolve("${item.managementULID}.json").delete()
                                 giveItems.add(item)
 
                             }
@@ -149,10 +154,12 @@ class GuiClickEvent : Listener {
                                     player.addItem(it)
                                 }
                             }
+                            delay(10)
                         }
 
                     }
                     53 -> {
+                        // close inventory
                         player.closeInventory()
 
                     }

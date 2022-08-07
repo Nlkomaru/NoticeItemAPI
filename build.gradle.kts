@@ -111,12 +111,15 @@ bukkit {
 
     permissions {
         register("noticeitemapi.admin") {
-            children =
-                listOf("noticeitemapi.command.remove", "noticeitemapi.command.open", "noticeitemapi.command.copy", "noticeitemapi.command.give")
+            children = listOf("noticeitemapi.command.remove",
+                "noticeitemapi.command.open",
+                "noticeitemapi.command.copy",
+                "noticeitemapi.command.give",
+                "noticeitemapi.command.copyall")
             default = Default.OP
         }
         register("noticeitemapi.player") {
-            children = listOf("noticeitemapi.command.open", "noticeitemapi.command.give")
+            children = listOf("noticeitemapi.command.open")
             default = Default.TRUE
         }
 

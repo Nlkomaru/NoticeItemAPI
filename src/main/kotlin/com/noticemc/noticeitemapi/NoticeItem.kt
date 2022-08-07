@@ -31,7 +31,6 @@ import org.bukkit.entity.Player
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.java.JavaPlugin
-import java.io.*
 import java.time.ZonedDateTime
 import java.util.function.Function.*
 
@@ -118,7 +117,7 @@ class NoticeItem : JavaPlugin(), NoticeItemAPI {
 
         val uuid = player.uniqueId
         val fileName = "$ulid.json"
-        val fileDir = File(File(File(plugin.dataFolder, "data"), uuid.toString()), fileName)
+        val fileDir = plugin.dataFolder.resolve("data").resolve(uuid.toString()).resolve(fileName)
         if (!fileDir.exists()) {
             return false
         }
