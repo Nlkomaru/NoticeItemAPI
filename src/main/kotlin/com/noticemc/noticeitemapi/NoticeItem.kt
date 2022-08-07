@@ -160,8 +160,8 @@ class NoticeItem : JavaPlugin(), NoticeItemAPI {
                 file.createNewFile()
                 file.writeText(string)
 
-                if (player.isOnline) {
-                    (player as Player).sendMessage(mm.deserialize("<color:yellow>受け取ることが可能なアイテムがあります</color> <click:run_command:'/nia open'>クリックで開く</click>"))
+                if (player is Player) {
+                    player.sendMessage(mm.deserialize("<color:yellow>受け取ることが可能なアイテムがあります</color> <click:run_command:'/nia open'>クリックで開く</click>"))
                 }
             }
         }
