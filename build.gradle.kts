@@ -9,7 +9,6 @@
  */
 
 import net.minecrell.pluginyml.bukkit.BukkitPluginDescription.Permission.Default
-import org.apache.commons.logging.LogFactory.release
 
 plugins {
     id("java")

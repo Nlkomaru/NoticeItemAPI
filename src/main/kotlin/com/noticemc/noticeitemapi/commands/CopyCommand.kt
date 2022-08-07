@@ -11,6 +11,7 @@
 package com.noticemc.noticeitemapi.commands
 
 import cloud.commandframework.annotations.Argument
+import cloud.commandframework.annotations.CommandDescription
 import cloud.commandframework.annotations.CommandMethod
 import cloud.commandframework.annotations.CommandPermission
 import com.noticemc.noticeitemapi.api.NoticeItemAPI
@@ -24,6 +25,7 @@ import org.bukkit.entity.Player
 class CopyCommand {
     @CommandMethod("nia copy <playerName>")
     @CommandPermission("noticeitemapi.command.copy")
+    @CommandDescription("指定したプレイヤーにメインハンドにあるアイテムを与えます (メインハンドのアイテムを失いません)")
     fun copy(sender: CommandSender, @Argument(value = "playerName", suggestions = "playerName") vararg playerName: String) {
         if (sender !is Player) {
             return

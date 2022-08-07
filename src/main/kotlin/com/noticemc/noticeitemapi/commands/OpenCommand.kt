@@ -10,6 +10,7 @@
 
 package com.noticemc.noticeitemapi.commands
 
+import cloud.commandframework.annotations.CommandDescription
 import cloud.commandframework.annotations.CommandMethod
 import cloud.commandframework.annotations.CommandPermission
 import com.github.shynixn.mccoroutine.bukkit.launch
@@ -25,6 +26,7 @@ class OpenCommand {
 
     @CommandMethod("nia open")
     @CommandPermission("noticeitemapi.command.open")
+    @CommandDescription("GUIを開きます")
     fun open(sender: CommandSender) {
         plugin.launch {
             if (sender !is Player) {

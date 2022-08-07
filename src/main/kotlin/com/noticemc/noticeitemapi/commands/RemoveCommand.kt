@@ -11,6 +11,7 @@
 package com.noticemc.noticeitemapi.commands
 
 import cloud.commandframework.annotations.Argument
+import cloud.commandframework.annotations.CommandDescription
 import cloud.commandframework.annotations.CommandMethod
 import cloud.commandframework.annotations.CommandPermission
 import com.noticemc.noticeitemapi.api.NoticeItemAPI
@@ -22,6 +23,7 @@ import org.bukkit.entity.Player
 class RemoveCommand {
     @CommandMethod("nia remove <playerName> <ulid>")
     @CommandPermission("noticeitemapi.command.remove")
+    @CommandDescription("プレイヤーから与えたアイテムを削除します")
     fun remove(sender: CommandSender,
         @Argument(value = "playerName", suggestions = "playerName") playerName: String,
         @Argument(value = "ulid") ulid: String) {

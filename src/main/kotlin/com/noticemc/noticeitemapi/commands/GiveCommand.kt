@@ -21,6 +21,7 @@
 package com.noticemc.noticeitemapi.commands
 
 import cloud.commandframework.annotations.Argument
+import cloud.commandframework.annotations.CommandDescription
 import cloud.commandframework.annotations.CommandMethod
 import cloud.commandframework.annotations.CommandPermission
 import com.noticemc.noticeitemapi.api.NoticeItemAPI
@@ -34,6 +35,7 @@ import org.bukkit.entity.Player
 class GiveCommand {
     @CommandMethod("nia give <playerName> <description>")
     @CommandPermission("noticeitemapi.command.give")
+    @CommandDescription("指定したプレイヤーにメインハンドにあるアイテムを与えます (メインハンドのアイテムを失います)")
     fun give(sender: CommandSender,
         @Argument(value = "playerName", suggestions = "playerName") playerName: String,
         @Argument(value = "description") vararg description: String) {

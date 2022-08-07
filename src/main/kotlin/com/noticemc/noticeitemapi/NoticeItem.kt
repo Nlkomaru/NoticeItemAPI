@@ -63,8 +63,7 @@ class NoticeItem : JavaPlugin(), NoticeItemAPI {
             identity(),
             identity())
 
-
-        if (commandManager.queryCapability(CloudBukkitCapabilities.ASYNCHRONOUS_COMPLETION)) {
+        if (commandManager.hasCapability(CloudBukkitCapabilities.ASYNCHRONOUS_COMPLETION)) {
             commandManager.registerAsynchronousCompletions()
         }
         val annotationParser: cloud.commandframework.annotations.AnnotationParser<CommandSender> =
@@ -96,9 +95,7 @@ class NoticeItem : JavaPlugin(), NoticeItemAPI {
         limit: ZonedDateTime?,
         supplement: HashMap<String, String>?,
         description: String?): String {
-
         return pushItems(player, items, limit, supplement, description)
-
     }
 
     override fun addItem(player: OfflinePlayer,
@@ -115,13 +112,11 @@ class NoticeItem : JavaPlugin(), NoticeItemAPI {
             }
         }
         return pushItems(player, list, limit, supplement, description)
-
     }
 
     override fun removeItem(player: OfflinePlayer, ulid: String): Boolean {
 
         val uuid = player.uniqueId
-
         val fileName = "$ulid.json"
         val fileDir = File(File(File(plugin.dataFolder, "data"), uuid.toString()), fileName)
         if (!fileDir.exists()) {
@@ -135,7 +130,6 @@ class NoticeItem : JavaPlugin(), NoticeItemAPI {
         limit: ZonedDateTime?,
         supplement: HashMap<String, String>?,
         description: String?): String {
-
         val managementULID = ULID.random()
         plugin.launch {
             if (items.isEmpty()) {
@@ -143,9 +137,8 @@ class NoticeItem : JavaPlugin(), NoticeItemAPI {
             }
             withContext(Dispatchers.IO) {
                 val uuid = player.uniqueId
-
                 val fileName = "$managementULID.json"
-                val fileDir = File(File(File(plugin.dataFolder, "data"), uuid.toString()), fileName)
+                val file = plugin.dataFolder.resolve("data").resolve(uuid.toString()).resolve(fileName)
                 val itemStacks = ArrayList<ItemStack>()
 
                 withContext(Dispatchers.Default) {
@@ -163,16 +156,9 @@ class NoticeItem : JavaPlugin(), NoticeItemAPI {
                 }
 
                 val string = json.encodeToString(itemData)
-
-                if (!fileDir.parentFile.exists()) {
-                    fileDir.parentFile.mkdirs()
-                }
-
-                fileDir.createNewFile()
-
-                val fw = PrintWriter(BufferedWriter(OutputStreamWriter(FileOutputStream(fileDir), "UTF-8")))
-                fw.write(string)
-                fw.close()
+                file.parentFile.mkdirs()
+                file.createNewFile()
+                file.writeText(string)
 
                 if (player.isOnline) {
                     (player as Player).sendMessage(mm.deserialize("<color:yellow>受け取ることが可能なアイテムがあります</color> <click:run_command:'/nia open'>クリックで開く</click>"))

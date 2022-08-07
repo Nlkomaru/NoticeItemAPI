@@ -24,6 +24,7 @@ class CopyAllCommand {
 
     @CommandMethod("nia copyAll")
     @CommandPermission("noticeitemapi.command.copyall")
+    @CommandDescription("手に持っているアイテムを現在サーバーにいるすべてのプレイヤーにコピーします  (メインハンドのアイテムを失いません)")
     fun copy(sender: CommandSender) {
         if (sender !is Player) {
             return
